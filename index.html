@@ -1,12 +1,79 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:600px;background:#000;overflow:hidden;font-family:monospace}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
+html,body{width:100%;height:100%;min-height:100svh;background:#000;overflow:hidden;font-family:monospace}
+
+/* ── TOUCH CONTROLS ── */
+#touchControls{
+  position:absolute;bottom:0;left:0;right:0;
+  height:160px;pointer-events:none;display:none;
+  z-index:100;
+}
+/* Joystick base */
+#joyZone{
+  position:absolute;bottom:20px;left:20px;
+  width:110px;height:110px;
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.12);
+  pointer-events:all;touch-action:none;
+}
+#joyKnob{
+  position:absolute;top:50%;left:50%;
+  width:44px;height:44px;margin:-22px 0 0 -22px;
+  border-radius:50%;
+  background:rgba(255,255,255,.25);
+  border:2px solid rgba(255,255,255,.4);
+  pointer-events:none;transition:none;
+}
+/* Jump button */
+#btnJump{
+  position:absolute;bottom:28px;right:24px;
+  width:72px;height:72px;border-radius:50%;
+  background:rgba(255,100,100,.18);
+  border:2px solid rgba(255,100,100,.4);
+  font-size:1.5rem;line-height:72px;text-align:center;
+  pointer-events:all;touch-action:none;
+  color:rgba(255,255,255,.7);user-select:none;
+}
+#btnJump:active{background:rgba(255,100,100,.35);}
+/* Dialog tap button */
+#btnTap{
+  position:absolute;bottom:28px;right:110px;
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(100,200,150,.14);
+  border:2px solid rgba(100,200,150,.3);
+  font-size:.55rem;line-height:1.2;text-align:center;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:all;touch-action:none;
+  color:rgba(255,255,255,.5);user-select:none;letter-spacing:.04em;
+  padding:4px;
+}
+#btnTap:active{background:rgba(100,200,150,.3);}
+/* Skip button for mobile */
+#btnSkipM{
+  position:absolute;bottom:28px;right:180px;
+  width:52px;height:52px;border-radius:50%;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  font-size:.48rem;line-height:1.2;text-align:center;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:all;touch-action:none;
+  color:rgba(255,255,255,.25);user-select:none;letter-spacing:.04em;padding:4px;
+}
+/* Show touch controls on touch devices */
+@media(pointer:coarse){
+  #touchControls{display:block;}
+  #ctrl{display:none!important;}
+}
 #gc{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
+@media(max-width:600px){#hud{top:6px;left:6px;}#hudL{font-size:.85rem;}}
 #ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 #startScreen{position:absolute;inset:0;background:linear-gradient(180deg,#87CEEB 0%,#B0E2FF 60%,#90EE90 60%,#5cb85c 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;transition:opacity 1.2s}
 .stitle{font-family:'Comic Sans MS',cursive;font-size:3.5rem;color:#ff6b9d;text-shadow:4px 4px 0 #ffb347;animation:tbounce 1s ease-in-out infinite alternate;margin-bottom:.5rem}
@@ -78,7 +145,7 @@ html,body{width:100%;height:600px;background:#000;overflow:hidden;font-family:mo
     <span class="dstar" style="top:54%;right:8%;animation-delay:.3s;font-size:1rem">⭐</span>
     <div class="stitle">LOOP</div>
     <div class="ssub">🌈 A fun adventure for everyone! 🌈</div>
-    <div class="shint">click anywhere to begin</div>
+    <div class="shint">tap or click anywhere to begin</div>
     <div style="position:absolute;bottom:6px;left:6px;font-size:6px;color:rgba(255,0,0,.04);font-family:monospace">you have done this before · loop #4220 · do not trust the robot</div>
   </div>
   <div id="hud" style="display:none;position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px">
@@ -88,20 +155,26 @@ html,body{width:100%;height:600px;background:#000;overflow:hidden;font-family:mo
   </div>
   <div id="cp">💾 checkpoint saved</div>
   <div id="go"></div><div id="rg"></div><div id="sl"></div><div id="wh"></div>
-  <div id="db"><div id="dn"></div><div id="dt"></div><div id="dh">SPACE or CLICK to continue</div></div>
+  <div id="db"><div id="dn"></div><div id="dt"></div><div id="dh">SPACE / CLICK / TAP to continue</div></div>
   <div id="ds"><div id="dst">YOU FAILED</div><div id="dss">returning to checkpoint...</div></div>
   <div id="lr" style="display:none"><div id="ln">LOOP #4,220</div></div>
   <div id="ac" style="display:none"><div id="ach"></div><div id="acp"></div></div>
   <div id="es" style="display:none"><div id="el"></div><div id="ech"><p>loop_restart.exe — run?</p><div class="eo"><button id="by">YES</button><button id="bn2">NO</button></div></div></div>
   <div id="fw" style="display:none"><h1>YOU WIN! 🎉</h1><p>Congratulations! You completed the game!</p></div>
   <div id="bh" style="display:none"><div id="bn">A.R.I.A — AUTONOMOUS REALITY INTERFACE AGENT</div><div id="bo"><div id="bf"></div></div></div>
-  <div id="ctrl" style="display:none">WASD/ARROWS move &nbsp;|&nbsp; W/↑/SPACE jump &nbsp;|&nbsp; SPACE/CLICK dialog</div>
+  <div id="ctrl" style="display:none">WASD/ARROWS move | W/↑/SPACE jump | SPACE/CLICK dialog | Mobile: joystick + jump button</div>
   <button id="skip" style="display:none">skip →</button>
+  <div id="touchControls">
+    <div id="joyZone"><div id="joyKnob"></div></div>
+    <div id="btnJump">&#x2191;</div>
+    <div id="btnTap">tap<br>next</div>
+    <div id="btnSkipM">skip</div>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.min.js"></script>
 <script>
 const cv=document.getElementById('gc'),ctx=cv.getContext('2d');
-function rsz(){cv.width=window.innerWidth;cv.height=Math.min(window.innerHeight,600);}
+function rsz(){cv.width=window.innerWidth;cv.height=window.innerHeight;}
 rsz();window.addEventListener('resize',rsz);
 
 // ── AUDIO ──
@@ -1084,6 +1157,143 @@ document.getElementById('skip').addEventListener('click',()=>{
   else if(t==='1'){document.getElementById('skip').dataset.act='2';document.getElementById('skip').textContent='skip → end';act3();hud();sfxGlitch();sfxTri();sfxBin(7000);startInfra();whisper('...4,219 times before this...');}
   else{document.getElementById('skip').dataset.act='0';document.getElementById('skip').textContent='skip → act 2';act1();hud();sfxCheer();}
 });
+
+// ══════════════════════════════════════════
+//  MOBILE TOUCH CONTROLS
+// ══════════════════════════════════════════
+(function(){
+  const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+  // Show touch UI if touch device
+  function checkTouch(){
+    if(isMobile || window.matchMedia('(pointer:coarse)').matches){
+      const tc = document.getElementById('touchControls');
+      if(tc) tc.style.display = 'block';
+    }
+  }
+  checkTouch();
+  window.addEventListener('resize', checkTouch);
+
+  // ── VIRTUAL JOYSTICK ──
+  const joyZone = document.getElementById('joyZone');
+  const joyKnob = document.getElementById('joyKnob');
+  const DEAD = 8;      // deadzone px
+  const MAX  = 42;     // max knob travel px
+  let joyActive = false, joyId = -1, joyOX = 0, joyOY = 0;
+
+  function joyStart(e){
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    joyId = t.identifier;
+    const r = joyZone.getBoundingClientRect();
+    joyOX = r.left + r.width/2;
+    joyOY = r.top  + r.height/2;
+    joyActive = true;
+    joyMove(e);
+  }
+  function joyMove(e){
+    e.preventDefault();
+    if(!joyActive) return;
+    let t;
+    for(let i=0;i<e.changedTouches.length;i++){
+      if(e.changedTouches[i].identifier===joyId){t=e.changedTouches[i];break;}
+    }
+    if(!t) return;
+    const dx = t.clientX - joyOX;
+    const dy = t.clientY - joyOY;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    const clamped = Math.min(dist, MAX);
+    const angle = Math.atan2(dy, dx);
+    const kx = Math.cos(angle)*clamped;
+    const ky = Math.sin(angle)*clamped;
+    joyKnob.style.transform = `translate(${kx}px,${ky}px)`;
+
+    // Map to virtual keys
+    const ax = dist > DEAD ? dx/dist : 0;
+    const ay = dist > DEAD ? dy/dist : 0;
+    // Horizontal
+    if(ax < -0.35){ G.keys['ArrowLeft']=true;  delete G.keys['ArrowRight']; }
+    else if(ax > 0.35){ G.keys['ArrowRight']=true; delete G.keys['ArrowLeft'];  }
+    else { delete G.keys['ArrowLeft']; delete G.keys['ArrowRight']; }
+  }
+  function joyEnd(e){
+    e.preventDefault();
+    let found=false;
+    for(let i=0;i<e.changedTouches.length;i++){
+      if(e.changedTouches[i].identifier===joyId){found=true;break;}
+    }
+    if(!found) return;
+    joyActive=false; joyId=-1;
+    joyKnob.style.transform='translate(0,0)';
+    delete G.keys['ArrowLeft']; delete G.keys['ArrowRight'];
+  }
+  joyZone.addEventListener('touchstart', joyStart, {passive:false});
+  joyZone.addEventListener('touchmove',  joyMove,  {passive:false});
+  joyZone.addEventListener('touchend',   joyEnd,   {passive:false});
+  joyZone.addEventListener('touchcancel',joyEnd,   {passive:false});
+
+  // ── JUMP BUTTON ──
+  const btnJump = document.getElementById('btnJump');
+  function jumpStart(e){
+    e.preventDefault();
+    G.keys['ArrowUp']=true;
+    // also trigger advance if in dialog
+    if(G.dlg) advance();
+  }
+  function jumpEnd(e){
+    e.preventDefault();
+    delete G.keys['ArrowUp'];
+  }
+  btnJump.addEventListener('touchstart', jumpStart, {passive:false});
+  btnJump.addEventListener('touchend',   jumpEnd,   {passive:false});
+  btnJump.addEventListener('touchcancel',jumpEnd,   {passive:false});
+
+  // ── TAP / DIALOG BUTTON ──
+  const btnTap = document.getElementById('btnTap');
+  btnTap.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    advance();
+  },{passive:false});
+
+  // ── SKIP BUTTON MOBILE ──
+  const btnSkipM = document.getElementById('btnSkipM');
+  btnSkipM.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    // Mirror the desktop skip button logic
+    const sk = document.getElementById('skip');
+    if(sk) sk.click();
+  },{passive:false});
+
+  // ── DIALOG BOX — tap anywhere on it ──
+  const db = document.getElementById('db');
+  db.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    advance();
+  },{passive:false});
+
+  // ── START SCREEN touch ──
+  const ss = document.getElementById('startScreen');
+  ss.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    ss.click();
+  },{passive:false});
+
+  // ── END SCREEN buttons touch ──
+  ['by','bn2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('touchstart',e=>{e.preventDefault();el.click();},{passive:false});
+  });
+
+  // Hide joystick / show tap controls during dialog
+  const origAdvance = window.advance;
+  // Periodically toggle btnTap visibility based on dialog state
+  setInterval(()=>{
+    if(!btnTap) return;
+    btnTap.style.opacity = G.dlg ? '1' : '0.4';
+    btnJump.style.opacity = G.dlg ? '0.3' : '1';
+  }, 200);
+
+})();
 
 ctx.fillStyle='#87CEEB';ctx.fillRect(0,0,cv.width,cv.height);
 loop();
